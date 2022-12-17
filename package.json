@@ -1,0 +1,66 @@
+{
+  "name": "unixty-chat-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx tsc && jasmine",
+    "dev": "nodemon ./src/app.ts",
+    "clean": "rimraf build/",
+    "build": "yarn clean && npx tsc",
+    "start": "npm run build && nodemon build/app.js",
+    "migrate-test:down": "db-migrate -e test reset",
+    "migrate-test:up": "db-migrate -e test up",
+	"migrate-dev:down": "db-migrate -e dev reset",
+    "migrate-dev:up": "db-migrate -e dev up",
+	"migrate-prod:down": "db-migrate -e prod reset",
+    "migrate-prod:up": "db-migrate -e prod up",                     "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx}'",
+    "lint": "eslint . --ext .ts"
+  },
+  "keywords": [
+    "Unixity Chat",
+    "unixty chat",
+    "Unixity",
+    "unixity"
+  ],
+  "author": [
+    "Eslam Mohamed Moawed ELabd",
+    "Abdelrahman Ali AbdElHafiz"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "helmet": "^6.0.1",
+    "jasmine": "^4.5.0",
+    "jasmine-spec-reporter": "^7.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "morgan": "^1.10.0",
+    "mysql2": "^2.3.3",
+    "supertest": "^6.3.3"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/express": "^4.17.15",
+    "@types/jasmine": "^4.3.1",
+    "@types/jsonwebtoken": "^8.5.9",
+    "@types/morgan": "^1.9.3",
+    "@types/node": "^18.11.16",
+    "@types/supertest": "^2.0.12",
+    "@typescript-eslint/eslint-plugin": "^5.46.1",
+    "@typescript-eslint/parser": "^5.46.1",
+    "db-migrate": "^0.11.13",
+    "db-migrate-mysql": "^2.2.0",
+    "eslint": "^8.30.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "nodemon": "^2.0.20",
+    "prettier": "^2.8.1",
+    "rimraf": "^3.0.2",
+    "sql-map-easy": "^1.0.15",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.4",
+    "yarn": "^1.22.19"
+  }
+}

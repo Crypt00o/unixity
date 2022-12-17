@@ -1,0 +1,42 @@
+{
+
+	"defaultEnv":{"ENV":"NODE_ENV"}
+
+	,
+	"prod":{
+		"driver":"mysql2",
+		"host":{"ENV":"MYSQL_HOST"},
+		"port":{"ENV":"MYSQL_PORT"},
+		"user":{"ENV":"MYSQL_USER"},
+		"password":{"ENV":"MYSQL_PASS"},
+		"database":{"ENV":"MYSQL_PROD_DB"}
+	}
+	,
+	"dev":{
+		"driver":"mysql2",
+		"host":{"ENV":"MYSQL_HOST"},
+		"port":{"ENV":"MYSQL_PORT"},
+		"user":{"ENV":"MYSQL_USER"},
+		"password":{"ENV":"MYSQL_PASS"},
+		"database":{"ENV":"MYSQL_DEV_DB"}
+	}
+
+	,
+
+	"test":{
+		"driver":"mysql2",
+		"host":{"ENV":"MYSQL_HOST"},
+		"port":{"ENV":"MYSQL_PORT"},
+		"user":{"ENV":"MYSQL_USER"},
+		"password":{"ENV":"MYSQL_PASS"},
+		"database":{"ENV":"MYSQL_TEST_DB"}
+
+
+	}
+
+
+
+
+}
+
+
