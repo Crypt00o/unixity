@@ -10,7 +10,6 @@ const myGeneralJsonResponser=(req:Request,res:Response,statusCode:number,replay:
   res.writeHead(statusCode,{'content-type':'application/json'})
   res.write(JSON.stringify(replay))
   res.end()
-
 }
 const myGeneralHtmLResponser=(req:Request,res:Response,statusCode:number,replay:string):void=>{
   res.writeHead(statusCode,{'content-type':'text/html ; charset=utf-8'})
@@ -20,7 +19,7 @@ const myGeneralHtmLResponser=(req:Request,res:Response,statusCode:number,replay:
 }
 
 const welcomeMessage = (req: Request, res: Response): void => {
-myGeneralJsonResponser(req,res,200,{Server:'0xCrypt00o Server is Working'})
+	myGeneralJsonResponser(req,res,200,{Server:'Unixity Chat Application , Created By Eslam Mohamed Elabd & Abdelrahman Ali AbdElhafiz'})
 }
 
 const notFound = (req: Request, res: Response): void => {

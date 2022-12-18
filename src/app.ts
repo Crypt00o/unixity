@@ -39,12 +39,24 @@ app.use(router)
 const PORT: string | number = process.env.PORT || 3000 ;
 
 
-(async()=>{
 
-	const connection= await  client.getConnection();
-	const testQuesry= "SELECT now() from "
 
-})();
+async function testDatabaseConnection(){
+	try {
+		const connection= await  client.getConnection();
+		const connectionTime=await (connection.query( "SELECT now() as TestConnectionTime;")) as unknown as Array<Array<{TestConnectionTime:string}>> ;
+		connection.release();
+		console.log(`[+] Connected Successfully To Database at ${connectionTime[0][0].TestConnectionTime } `)
+	}
+	catch(err){
+		console.log(`[-] Error Connection Not Success To Database , Error : ${err}  `)
+		console.log("[+] Retrying to Connect Database after 5 Seconds")
+		setTimeout(testDatabaseConnection,5000) 
+
+	}
+}
+
+testDatabaseConnection();
 
 
 
