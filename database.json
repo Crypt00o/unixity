@@ -4,7 +4,7 @@
 
 	,
 	"prod":{
-		"driver":"mysql2",
+		"driver":"mysql",
 		"host":{"ENV":"MYSQL_HOST"},
 		"port":{"ENV":"MYSQL_PORT"},
 		"user":{"ENV":"MYSQL_USER"},
@@ -13,7 +13,7 @@
 	}
 	,
 	"dev":{
-		"driver":"mysql2",
+		"driver":"mysql",
 		"host":{"ENV":"MYSQL_HOST"},
 		"port":{"ENV":"MYSQL_PORT"},
 		"user":{"ENV":"MYSQL_USER"},
@@ -24,7 +24,7 @@
 	,
 
 	"test":{
-		"driver":"mysql2",
+		"driver":"mysql",
 		"host":{"ENV":"MYSQL_HOST"},
 		"port":{"ENV":"MYSQL_PORT"},
 		"user":{"ENV":"MYSQL_USER"},
