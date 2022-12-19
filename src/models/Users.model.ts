@@ -1,16 +1,17 @@
 import {User} from "../types/User.type"
-import { hashPass,checkPass } from "../utils/passCrypto";
+import { hashPass,checkPass } from "../utils/passCrypto"
 import {client} from "../database"
 import {SqlMap} from "sql-map-easy"
-import {PoolConnection} from "mysql2/promise";
+import {PoolConnection} from "mysql2/promise"
+
 class Users {
 
-	async indexAllUsers() : Promise<User[]>{
+	async indexAllUsers() : Promise<Array<User>>{
 		try{
 			const connection=await client.getConnection();
 			const result = await connection.query("SELECT username,email,firstname,lastname,bio FROM Users;") as Array<Array<unknown>>
 			connection.release();
-			return result[0] as User[]
+			return result[0] as Array<User>
 		}
 		catch(err){
 			throw new Error(`[-] Error While Indexing Users ${err}`)

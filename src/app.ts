@@ -5,6 +5,7 @@ import helmet from 'helmet'
 import router from './routes/index'
 import bodyParser from 'body-parser'
 import {client} from "./database"
+
 dotenv.config()
 
 const app: Application = express()
@@ -46,7 +47,7 @@ async function testDatabaseConnection(){
 		const connectionTime=await (connection.query( "SELECT now() as TestConnectionTime;")) as unknown as Array<Array<{TestConnectionTime:string}>> ;
 		connection.release();
 		console.log(`[+] Connected Successfully To Database at ${connectionTime[0][0].TestConnectionTime } `)
-		testModels()
+	
 	}
 	catch(err){
 		console.log(`[-] Error Connection Not Success To Database , Error : ${err}  `)
@@ -57,9 +58,6 @@ async function testDatabaseConnection(){
 }
 
 testDatabaseConnection();
-
-
-
 app.listen(PORT, () => {
   console.log(`[+] Server Listening Now at Port : ${PORT} `)
 })

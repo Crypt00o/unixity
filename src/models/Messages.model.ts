@@ -3,8 +3,10 @@ import {PoolConnection} from "mysql2/promise"
 import {client} from "../database"
 import { sqlParser } from "sql-map-easy"
 import { v4 } from "uuid"
+import { BlockLists} from "./BlockLists.model";
 
-class Messages {
+
+class Messages extends BlockLists {
 
 	async MessageCount(connection:PoolConnection,fromUser:string,toUser:string):Promise<number>{
 
@@ -20,13 +22,13 @@ class Messages {
 
 
 
-	async indexAllMessages(offset: number =0,fromUser:string ,toUser:string ):Promise<Message[]>{
+	async indexAllMessages(offset: number =0,fromUser:string ,toUser:string ):Promise<Array<Message>>{
 		try{
 			const connection = await client.getConnection();
 			const sqlQuery=sqlParser("SELECT LOWER(CONCAT(SUBSTR(HEX(message_id), 1, 8), '-',SUBSTR(HEX(message_id), 9, 4), '-',SUBSTR(HEX(message_id), 13, 4), '-',SUBSTR(HEX(message_id), 17, 4), '-',SUBSTR(HEX(message_id), 21))) as message_id	,from_user,to_user,message_body,message_time,is_edited FROM Messages WHERE to_user=$1 AND from_user=$2 OR to_user=$2 AND from_user=$1 ORDER BY message_time DESC LIMIT $3,20 ; ",[fromUser,toUser,offset])
 			const messages=await connection.query(sqlQuery)	as Array<Array<unknown>>
 			connection.release()
-			return messages[0] as Message[]
+			return messages[0] as Array<Message>
 		}
 		catch(err){
 			throw new Error(`[-] Error While Indexing Messages : ${err}`)
@@ -67,7 +69,7 @@ class Messages {
 	async sendMessage(messageBody:string,fromUser:string,toUser:string):Promise<boolean>{
 		try{
 			const connection = await client.getConnection();
-			if(true /* replace me with isUserBlocked? Function */){
+			if( !  await this.isBlocked(connection, fromUser, toUser)){
 				const newMessageId=v4()
 				const sqlQuery =sqlParser("INSERT INTO Messages(from_user,to_user,message_body,message_id) VALUES($1,$2,$3,UNHEX(REPLACE($4,'-','')) ) ; ",[fromUser,toUser,messageBody,newMessageId])
 				await connection.query(sqlQuery);
@@ -93,13 +95,21 @@ class Messages {
 	async updateMessageBody(newMessageBody:string,messageId:string):Promise<Message|false>{
 		try{
 			const connection = await client.getConnection()
-			if(await this.isMessageExists(connection, messageId)){	
+			if(await this.isMessageExists(connection, messageId)){
+				const messageInfo=await this.showMessage(messageId);
+				if( ! await this.isBlocked(connection, messageInfo.from_user, messageInfo.to_user)){
 				const sqlQuery= sqlParser("UPDATE Messages SET message_body=$1,is_edited=1 WHERE message_id=UNHEX(REPLACE($2,'-',''));",[newMessageBody,messageId])
 				await connection.query(sqlQuery)
 				connection.release()
 				return (await this.showMessage(messageId)) 
+				}
+				else{
+					connection.release()
+					return false
+				}
 			}
 			else{
+				connection.release()
 				return false
 			}
 		}
@@ -113,10 +123,23 @@ class Messages {
 		try{
 			const connection = await client.getConnection();
 			if (await this.isMessageExists(connection, messageId)){
-				const sqlQuery=sqlParser(`DELETE FROM Messages WHERE message_id=UNHEX(REPLACE($1,'-','')) ;`,[messageId])
-				await connection.query(sqlQuery);
-				return true
-				connection.release()
+				const messageInfo= await this.showMessage(messageId)
+				if(! await this.isBlocked(connection, messageInfo.from_user, messageInfo.to_user)){
+					const sqlQuery=sqlParser(`DELETE FROM Messages WHERE message_id=UNHEX(REPLACE($1,'-','')) ;`,[messageId])
+					await connection.query(sqlQuery);
+					if(await this.isMessageExists(connection, messageId)){
+						connection.release()
+						return false
+					}
+					else{
+						connection.release()
+						return true
+					}
+				}
+				else{
+					connection.release()
+					return false
+				}
 			}
 			else{		
 				connection.release()
