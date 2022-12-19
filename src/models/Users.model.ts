@@ -3,7 +3,6 @@ import { hashPass,checkPass } from "../utils/passCrypto";
 import {client} from "../database"
 import {SqlMap} from "sql-map-easy"
 import {PoolConnection} from "mysql2/promise";
-import {compare} from "bcrypt";
 class Users {
 
 	async indexAllUsers() : Promise<User[]>{
@@ -39,7 +38,6 @@ class Users {
 		try{
 			const sqlQuery=SqlMap.sqlParser("SELECT username,email,firstname,lastname,bio,password FROM Users WHERE username=$1 OR email=$2 ; ",[username,email]);
 			const result =await connection.query(sqlQuery) as Array<Array<unknown>>;
-			console.log(result)
 			if (result[0].length==0){
 				return false
 			}
@@ -111,6 +109,7 @@ class Users {
 					}
 					const sqlQuery=SqlMap.sqlParser("UPDATE Users SET username=$1,email=$2,password=$3,firstname=$4,lastname=$5,bio=$6 WHERE username=$7",
 						[newUserData.username,newUserData.email,newUserData.password,newUserData.firstname,newUserData.lastname,newUserData.bio])
+					connection.release()
 					return newUserData;
 				}
 				else{
@@ -133,13 +132,16 @@ class Users {
 			const user:User|false= await this.checkUserAvailableity(connection,idenity,idenity)
 			if(user){
 					if(checkPass(plainPassword,user.password)){
+						connection.release()
 						return user.username
 					}
 					else{
+						connection.release()
 						return false
 					}
 			}
 				else{
+				connection.release()
 				throw new Error (`[-] Error Not Valid Username or Email : ${idenity}`)
 				}
 		}

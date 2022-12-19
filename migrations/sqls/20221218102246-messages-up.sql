@@ -1,5 +1,5 @@
  CREATE TABLE IF NOT EXISTS Messages(
-message_id  BIGINT UNSIGNED AUTO_INCREMENT NOT NULL,
+message_id  BINARY(16) UNIQUE NOT NULL,
 from_user VARCHAR(64) NOT NULL,
 to_user VARCHAR(64) NOT NULL,
 message_body TEXT NOT NULL,
@@ -9,3 +9,4 @@ FOREIGN KEY(to_user) REFERENCES Users(username),
 FOREIGN KEY(from_user) REFERENCES Users(username),
 PRIMARY KEY(message_id)
 );
+

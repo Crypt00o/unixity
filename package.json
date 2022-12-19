@@ -11,10 +11,11 @@
     "start": "npm run build && nodemon build/app.js",
     "migrate-test:down": "db-migrate -e test reset",
     "migrate-test:up": "db-migrate -e test up",
-	"migrate-dev:down": "db-migrate -e dev reset",
+    "migrate-dev:down": "db-migrate -e dev reset",
     "migrate-dev:up": "db-migrate -e dev up",
-	"migrate-prod:down": "db-migrate -e prod reset",
-    "migrate-prod:up": "db-migrate -e prod up",                     "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx}'",
+    "migrate-prod:down": "db-migrate -e prod reset",
+    "migrate-prod:up": "db-migrate -e prod up",
+    "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx}'",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [
@@ -48,6 +49,7 @@
     "@types/morgan": "^1.9.3",
     "@types/node": "^18.11.16",
     "@types/supertest": "^2.0.12",
+    "@types/uuidv4": "^5.0.0",
     "@typescript-eslint/eslint-plugin": "^5.46.1",
     "@typescript-eslint/parser": "^5.46.1",
     "db-migrate": "^0.11.13",

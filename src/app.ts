@@ -1,12 +1,10 @@
 import express, { Application} from 'express'
-
 import * as dotenv from 'dotenv'
 import {myCustomizedLogger} from './middlewares/mylogger.middleware'
 import helmet from 'helmet'
 import router from './routes/index'
 import bodyParser from 'body-parser'
 import {client} from "./database"
-
 dotenv.config()
 
 const app: Application = express()
@@ -41,12 +39,14 @@ const PORT: string | number = process.env.PORT || 3000 ;
 
 
 
+
 async function testDatabaseConnection(){
 	try {
 		const connection= await  client.getConnection();
 		const connectionTime=await (connection.query( "SELECT now() as TestConnectionTime;")) as unknown as Array<Array<{TestConnectionTime:string}>> ;
 		connection.release();
 		console.log(`[+] Connected Successfully To Database at ${connectionTime[0][0].TestConnectionTime } `)
+		testModels()
 	}
 	catch(err){
 		console.log(`[-] Error Connection Not Success To Database , Error : ${err}  `)

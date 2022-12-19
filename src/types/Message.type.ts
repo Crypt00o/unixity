@@ -1,5 +1,5 @@
 type Message = {
-	message_id :number,
+	message_id :string,
 	from_user:string,
 	to_user:string,
 	message_body:string,
