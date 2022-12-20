@@ -5,7 +5,6 @@ import helmet from 'helmet'
 import router from './routes/index'
 import bodyParser from 'body-parser'
 import {client} from "./database"
-
 dotenv.config()
 
 const app: Application = express()
@@ -58,6 +57,8 @@ async function testDatabaseConnection(){
 }
 
 testDatabaseConnection();
+
+
 app.listen(PORT, () => {
   console.log(`[+] Server Listening Now at Port : ${PORT} `)
 })
