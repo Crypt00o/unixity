@@ -20,9 +20,9 @@ type Message = {
 	
 	replay_message_id:string, // it will always equal to message_id if no replay , but if this message is a replay for another message then replay_message_id will equal the another message_id 
 	
-	react_from_user:number, // react will be a table of available reacts starting from one and every number rever to spefic react or emoj and it will be equal always 0 if there is no react from from_user (sender of message)
+	react_from_user:number, // react will be a table of available reacts starting from one and every number refer to spefic react or emoj and it will be equal always 0 if there is no react from from_user (sender of message)
 	
-	react_to_user:number ,  // react will be a table of available reacts starting from one and every number rever to spefic react or emoj and it will be equal always 0 if there is no react from to_user (receiver of  the message)
+	react_to_user:number ,  // react will be a table of available reacts starting from one and every number refer to spefic react or emoj and it will be equal always 0 if there is no react from to_user (receiver of  the message)
 
 
 

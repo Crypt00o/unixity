@@ -28,11 +28,11 @@
 
 
 
-	react_from_user SMALLINT UNSIGNED NOT NULL DEFAULT(0), -- react will be a table of available reacts starting from one and every number rever to spefic react or emoj and it will be equal always 0 if there is no react from from_user (sender of message)
+	react_from_user SMALLINT UNSIGNED NOT NULL DEFAULT(0), -- react will be a table of available reacts starting from one and every number refer to spefic react or emoj and it will be equal always 0 if there is no react from from_user (sender of message)
 
 
 
-	react_to_user SMALLINT UNSIGNED NOT NULL DEFAULT(0), -- react will be a table of available reacts starting from one and every number rever to spefic react or emoj and it will be equal always 0 if there is no react from to_user (receiver of  the message)
+	react_to_user SMALLINT UNSIGNED NOT NULL DEFAULT(0), -- react will be a table of available reacts starting from one and every number refer to spefic react or emoj and it will be equal always 0 if there is no react from to_user (receiver of  the message)
  
 
 	FOREIGN KEY(replay_message_id) REFERENCES Messages(message_id),
