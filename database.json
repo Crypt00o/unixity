@@ -9,7 +9,10 @@
 		"port":{"ENV":"MYSQL_PORT"},
 		"user":{"ENV":"MYSQL_USER"},
 		"password":{"ENV":"MYSQL_PASS"},
-		"database":{"ENV":"MYSQL_PROD_DB"}
+		"database":{"ENV":"MYSQL_PROD_DB"},
+		"ssl": {
+		"rejectUnauthorized": false
+		}
 	}
 	,
 	"dev":{

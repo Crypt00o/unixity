@@ -4,8 +4,9 @@ import {myCustomizedLogger} from './middlewares/mylogger.middleware'
 import helmet from 'helmet'
 import router from './routes/index'
 import bodyParser from 'body-parser'
-import {client} from "./database"
+import {client} from "./database/index"
 dotenv.config()
+
 
 const app: Application = express()
 

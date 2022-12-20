@@ -10,7 +10,7 @@
 
 	message_type TINYINT UNSIGNED NOT NULL DEFAULT(0), -- message_type refer to the type of message , default value will be always zero , which mean text message , the anothers types of message values for now is under design and development 
 
-	message_time TIMESTAMP NOT NULL DEFAULT(NOW()), -- the time which message have been sended or inserted into database
+	message_time TIMESTAMP NOT NULL DEFAULT(CURRENT_TIMESTAMP()), -- the time which message have been sended or inserted into database
 
 
 

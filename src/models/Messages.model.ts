@@ -42,9 +42,9 @@ class Messages extends BlockLists {
 
 			const connection = await client.getConnection();
 			
-			await this.seenMessageStatusHook(connection, userWhoWantToIndexMessages, theAnotherUser) // makeing the User Who Will Index The Messages Between Him and Other User  To See  
+			await this.seenMessageStatusHook(connection, userWhoWantToIndexMessages, theAnotherUser) // makeing the User Who Will Index The Messages Between Him and Other User  To Seen The the Other User Messages  
 			
-			const sqlQuery=sqlParser("SELECT LOWER(CONCAT(SUBSTR(HEX(message_id), 1, 8), '-',SUBSTR(HEX(message_id), 9, 4), '-',SUBSTR(HEX(message_id), 13, 4), '-',SUBSTR(HEX(message_id), 17, 4), '-',SUBSTR(HEX(message_id), 21))) AS message_id	,  LOWER(CONCAT(SUBSTR(HEX(replay_message_id), 1, 8), '-',SUBSTR(HEX(replay_message_id), 9, 4), '-',SUBSTR(HEX(replay_message_id), 13, 4), '-',SUBSTR(HEX(replay_message_id), 17, 4), '-',SUBSTR(HEX(replay_message_id), 21))) AS replay_message_id ,from_user,to_user,message_body,message_time,is_edited,message_type,is_deleted_for_user,message_status,react_from_user,react_to_user FROM Messages WHERE to_user=$1 AND from_user=$2 OR to_user=$2 AND from_user=$1 ORDER BY message_time DESC LIMIT $3,20 ; ",[userWhoWantToIndexMessages,theAnotherUser,offset])
+			const sqlQuery=sqlParser("SELECT LOWER(CONCAT(SUBSTR(HEX(message_id), 1, 8), '-',SUBSTR(HEX(message_id), 9, 4), '-',SUBSTR(HEX(message_id), 13, 4), '-',SUBSTR(HEX(message_id), 17, 4), '-',SUBSTR(HEX(message_id), 21))) AS message_id	,  LOWER(CONCAT(SUBSTR(HEX(replay_message_id), 1, 8), '-',SUBSTR(HEX(replay_message_id), 9, 4), '-',SUBSTR(HEX(replay_message_id), 13, 4), '-',SUBSTR(HEX(replay_message_id), 17, 4), '-',SUBSTR(HEX(replay_message_id), 21))) AS replay_message_id ,from_user,to_user,message_body,message_time,is_edited,message_type,is_deleted_for_user,message_status,react_from_user,react_to_user FROM Messages WHERE to_user=$1 AND from_user=$2 AND is_deleted_for_user <> 2 OR to_user=$2 AND from_user=$1 AND is_deleted_for_user <> 1 ORDER BY message_time DESC LIMIT $3,20 ; ",[userWhoWantToIndexMessages,theAnotherUser,offset])
 			const messages=await connection.query(sqlQuery)	as unknown as Array<Array<Message>>[0]
 			
 			connection.release()
@@ -86,7 +86,6 @@ class Messages extends BlockLists {
 
 
 			const sqlQuery=sqlParser("SELECT LOWER(CONCAT(SUBSTR(HEX(message_id), 1, 8), '-',SUBSTR(HEX(message_id), 9, 4), '-',SUBSTR(HEX(message_id), 13, 4), '-',SUBSTR(HEX(message_id), 17, 4), '-',SUBSTR(HEX(message_id), 21))) AS message_id	FROM Messages WHERE message_id=UNHEX(REPLACE($1,'-',''))  AND from_user=$2 AND to_user=$3 ;",[messageId,sender,receiver])
-			console.log(sqlQuery)
 			const result= await connection.query(sqlQuery ) as unknown as  Array<Array<{message_id:string}>>
 			if (result[0].length==0){
 				return false
@@ -219,9 +218,79 @@ class Messages extends BlockLists {
 	}
 
 
-	async reactMessage(sender:string,receiver:string,messageId:string,react:number){
-		
+	async reactMessage(reactSender:string,reactReceiver:string,messageId:string,reactValue:number):Promise<Message|false>{
+		try{
 
+			// @reactMessage will make sender  or user2 react the message by a reactValue : number , which assign to react_from_user or react_to_user depend on the user
+			
+			const connection = await client.getConnection(); 
+			
+			await this.seenMessageStatusHook(connection, reactSender, reactReceiver) // the user who  want to react then the spefic  message will see all the messages of the another user
+
+			if(await this.isMessageExists(connection, messageId, reactSender, reactReceiver) && ! await this.isBlocked(connection, reactSender, reactReceiver)){ 
+				
+				//checking if message Exists and the sender and receiver didn,t block each other
+				
+				let messageInfo= await this.getMessageInfo(reactSender, reactReceiver, messageId) // getting messageInfo to determine who will react the message the sender of message or receiver ? 
+
+				//if (from_user=reactSenderand to_user=reactReceiver ) then the react will be from the sender mean react_from_user
+
+				if (messageInfo.from_user==reactSender && messageInfo.to_user==reactReceiver && messageInfo.is_deleted_for_user !==1 ){
+					const sqlQuery=sqlParser("UPDATE Messages SET react_from_user=$1 WHERE message_id=UNHEX(REPLACE($2,'-','')) AND from_user=$3 AND to_user=$4 ; ",[reactValue,messageId,reactSender,reactReceiver])
+					await connection.query(sqlQuery)
+
+					messageInfo= await this.getMessageInfo(reactSender, reactReceiver, messageId) // getting messageInfo to determine if react operation success ? 
+
+					if(messageInfo.react_from_user===reactValue){ // checking if react operation success? return true if success , else return false
+							connection.release()
+							return messageInfo
+					}
+					else{
+							connection.release()
+							return false
+					}
+				}
+
+
+
+
+				//if (from_user=reactReceiver and to_user=reactSender ) then the react will be from the receiver mean react_to_user
+
+				else if(messageInfo.from_user==reactReceiver && messageInfo.to_user==reactSender && messageInfo.is_deleted_for_user !==2 ){
+						const sqlQuery=sqlParser("UPDATE Messages SET react_to_user=$1 WHERE message_id=UNHEX(REPLACE($2,'-','')) AND from_user=$3 AND to_user=$4 ; ",[reactValue,messageId,reactReceiver,reactSender])
+						await connection.query(sqlQuery)
+
+						messageInfo= await this.getMessageInfo(reactSender , reactReceiver , messageId) // getting messageInfo to determine if react operation success ? 
+
+						if(messageInfo.react_to_user===reactValue){ // checking if react operation success? return true if success , else return false
+							connection.release()
+							return messageInfo
+						}
+						else{
+							connection.release()
+							return false
+						}
+
+				}
+				
+				else{
+					// We Will return false because it mean there is a possible error because how from_user or to_user not equal sender or receiver or viceversa ? 
+					connection.release()
+					return false
+
+				}
+				
+				}
+			else{
+				// return false because Message not Exists between receiver and sender or sender blocked by receiver or viceversa 
+				connection.release()
+				return false
+			}
+		}
+		catch(err){
+
+			throw new Error(`[-] Error While Reacting Message : ${err}`)
+		}
 	}
 
 
