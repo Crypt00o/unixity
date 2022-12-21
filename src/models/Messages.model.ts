@@ -3,10 +3,15 @@ import {PoolConnection} from "mysql2/promise"
 import {client} from "../database"
 import { sqlParser } from "sql-map-easy"
 import { v4 } from "uuid"
-import { BlockLists} from "./BlockLists.model";
+import { BlockLists} from "./BlockLists.model"
 
 
-class Messages extends BlockLists {
+
+//getting a instance of blockList
+const blockList=new BlockLists()
+
+
+class Messages  {
 
 	async MessageCount(connection:PoolConnection,user1:string,user2:string):Promise<number>{
 		
@@ -36,6 +41,19 @@ class Messages extends BlockLists {
 
 	}
 
+	async deliverMessageStatusHook(connection:PoolConnection,userWhoShouldReceivedAMessage:string){
+
+
+		try{
+			const sqlQuery=sqlParser("UPDATE Messages SET message_status=1 WHERE to_user=$2 AND message_status=0 ; ",[userWhoShouldReceivedAMessage])
+			await connection.query(sqlQuery)
+		}
+		catch(err){
+			throw new Error(`Error While Changeing Message Status to Receive : ${err} `)
+		}
+
+	}
+
 	async indexAllMessages(userWhoWantToIndexMessages:string ,theAnotherUser:string,offset:number = 0 ):Promise<Array<Message>>{
 		try{
 			// @Showing Messages Between Some User and The Another User 
@@ -45,10 +63,10 @@ class Messages extends BlockLists {
 			await this.seenMessageStatusHook(connection, userWhoWantToIndexMessages, theAnotherUser) // makeing the User Who Will Index The Messages Between Him and Other User  To Seen The the Other User Messages  
 			
 			const sqlQuery=sqlParser("SELECT LOWER(CONCAT(SUBSTR(HEX(message_id), 1, 8), '-',SUBSTR(HEX(message_id), 9, 4), '-',SUBSTR(HEX(message_id), 13, 4), '-',SUBSTR(HEX(message_id), 17, 4), '-',SUBSTR(HEX(message_id), 21))) AS message_id	,  LOWER(CONCAT(SUBSTR(HEX(replay_message_id), 1, 8), '-',SUBSTR(HEX(replay_message_id), 9, 4), '-',SUBSTR(HEX(replay_message_id), 13, 4), '-',SUBSTR(HEX(replay_message_id), 17, 4), '-',SUBSTR(HEX(replay_message_id), 21))) AS replay_message_id ,from_user,to_user,message_body,message_time,is_edited,message_type,is_deleted_for_user,message_status,react_from_user,react_to_user FROM Messages WHERE to_user=$1 AND from_user=$2 AND is_deleted_for_user <> 2 OR to_user=$2 AND from_user=$1 AND is_deleted_for_user <> 1 ORDER BY message_time DESC LIMIT $3,20 ; ",[userWhoWantToIndexMessages,theAnotherUser,offset])
-			const messages=await connection.query(sqlQuery)	as unknown as Array<Array<Message>>[0]
+			const messages=await connection.query(sqlQuery) as Array<Array<unknown>>
 			
 			connection.release()
-			return messages 
+			return messages[0] as Array<Message>
 		}
 		catch(err){
 			throw new Error(`[-] Error While Indexing Messages : ${err}`)
@@ -107,10 +125,11 @@ class Messages extends BlockLists {
 
 
 			const connection = await client.getConnection();
-			const sqlQuery=sqlParser("SELECT LOWER(CONCAT(SUBSTR(HEX(message_id), 1, 8), '-',SUBSTR(HEX(message_id), 9, 4), '-',SUBSTR(HEX(message_id), 13, 4), '-',SUBSTR(HEX(message_id), 17, 4), '-',SUBSTR(HEX(message_id), 21))) AS message_id	,  LOWER(CONCAT(SUBSTR(HEX(replay_message_id), 1, 8), '-',SUBSTR(HEX(replay_message_id), 9, 4), '-',SUBSTR(HEX(replay_message_id), 13, 4), '-',SUBSTR(HEX(replay_message_id), 17, 4), '-',SUBSTR(HEX(replay_message_id), 21))) AS replay_message_id ,from_user,to_user,message_body,message_time,is_edited,message_type,is_deleted_for_user,message_status,react_from_user,react_to_user FROM Messages WHERE  message_id=UNHEX(REPLACE($1,'-','')) AND from_user=$2 AND to_user=$1 OR  from_user=$1 AND to_user=$2  ; ",[messageId,user1,user2])
-			const Message= await connection.query(sqlQuery) as unknown as  Array<Array<Message>>[0][0]
+			const sqlQuery=sqlParser("SELECT LOWER(CONCAT(SUBSTR(HEX(message_id), 1, 8), '-',SUBSTR(HEX(message_id), 9, 4), '-',SUBSTR(HEX(message_id), 13, 4), '-',SUBSTR(HEX(message_id), 17, 4), '-',SUBSTR(HEX(message_id), 21))) AS message_id	,  LOWER(CONCAT(SUBSTR(HEX(replay_message_id), 1, 8), '-',SUBSTR(HEX(replay_message_id), 9, 4), '-',SUBSTR(HEX(replay_message_id), 13, 4), '-',SUBSTR(HEX(replay_message_id), 17, 4), '-',SUBSTR(HEX(replay_message_id), 21))) AS replay_message_id ,from_user,to_user,message_body,message_time,is_edited,message_type,is_deleted_for_user,message_status,react_from_user,react_to_user FROM Messages WHERE  message_id=UNHEX(REPLACE($1,'-','')) AND from_user=$2 AND to_user=$3 OR  from_user=$3 AND to_user=$2 ; ",[messageId,user1,user2])
+			
+			const messageInfo= await connection.query(sqlQuery) as Array<Array<unknown>>
 			connection.release()
-			return Message 
+			return messageInfo[0][0] as Message
 		}
 		catch(err){
 			throw new Error(`[-] Error While Getting Message  Info: ${err} `)
@@ -127,7 +146,7 @@ class Messages extends BlockLists {
 
 			await this.seenMessageStatusHook(connection, sender, receiver) // Make The Sender See All Messages Which he didn,t see between him and receiver
 
-			if( !  await this.isBlocked(connection, sender, receiver)){   // checking if sender blocked receiver or blocked from it
+			if( !  await blockList.isBlocked(connection, sender, receiver)){   // checking if sender blocked receiver or blocked from it
 
 				const newMessageId=v4()  //	generateing Message uuidv4 on serverside  
 				
@@ -187,26 +206,21 @@ class Messages extends BlockLists {
 		
 			await this.seenMessageStatusHook(connection, sender, receiver) // @ Make The sender see all Messages He Didn,t See from the receiver
 
-			if(await this.isMessageExistsStrict(connection, messageId,sender,receiver)){ // @ check if sender already send it to the receiver or not 
+			if(await this.isMessageExistsStrict(connection, messageId,sender,receiver)  && ! await blockList.isBlocked(connection, sender, receiver) ){ 
+ 
+// @ check if sender already send it to the receiver or not 
 
-				if( ! await this.isBlocked(connection, sender, receiver)){ // @check if sender is blocked from receiver or viceversa  
+ // @check if sender is blocked from receiver or viceversa  
 
 				const sqlQuery= sqlParser("UPDATE Messages SET message_body=$1,is_edited=1 WHERE message_id=UNHEX(REPLACE($2,'-','')) AND from_user=$3 AND to_user=$4 ;",[newMessageBody,messageId,sender,receiver])
 				await connection.query(sqlQuery)
 				connection.release()
 				return (await this.getMessageInfo(messageId, sender, receiver)) // return the new Message after Updateing 
 				}
-				else{
-					
-					// return false because sender or receiver was blocked 
-
-					connection.release()
-					return false
-				}
-			}
+							
 			else{
 
-				// return false because Message not Exists or because User Doesn,t Have Permission to Update it(user didn,t send it )
+				// return false because Message not Exists or because User Doesn,t Have Permission to Update it(user didn,t send it ) ,or because sender or receiver was blocked  
 				
 				connection.release()
 				return false
@@ -227,16 +241,17 @@ class Messages extends BlockLists {
 			
 			await this.seenMessageStatusHook(connection, reactSender, reactReceiver) // the user who  want to react then the spefic  message will see all the messages of the another user
 
-			if(await this.isMessageExists(connection, messageId, reactSender, reactReceiver) && ! await this.isBlocked(connection, reactSender, reactReceiver)){ 
-				
-				//checking if message Exists and the sender and receiver didn,t block each other
+			if(await this.isMessageExists(connection, messageId, reactSender, reactReceiver) && ! await blockList.isBlocked(connection, reactSender, reactReceiver)){ 
+						//checking if message Exists and the sender and receiver didn,t block each other
 				
 				let messageInfo= await this.getMessageInfo(reactSender, reactReceiver, messageId) // getting messageInfo to determine who will react the message the sender of message or receiver ? 
 
 				//if (from_user=reactSenderand to_user=reactReceiver ) then the react will be from the sender mean react_from_user
-
+				
 				if (messageInfo.from_user==reactSender && messageInfo.to_user==reactReceiver && messageInfo.is_deleted_for_user !==1 ){
 					const sqlQuery=sqlParser("UPDATE Messages SET react_from_user=$1 WHERE message_id=UNHEX(REPLACE($2,'-','')) AND from_user=$3 AND to_user=$4 ; ",[reactValue,messageId,reactSender,reactReceiver])
+
+
 					await connection.query(sqlQuery)
 
 					messageInfo= await this.getMessageInfo(reactSender, reactReceiver, messageId) // getting messageInfo to determine if react operation success ? 
@@ -385,7 +400,7 @@ class Messages extends BlockLists {
 
 			if (await this.isMessageExistsStrict(connection, messageId,sender,receiver)){ // checking if sender send this message to receiver 
 
-				if(! await this.isBlocked(connection, sender, receiver)){  //  @check if sender is blocked from receiver or viceversa 
+				if(! await blockList.isBlocked(connection, sender, receiver)){  //  @check if sender is blocked from receiver or viceversa 
 
 
 					const sqlQuery=sqlParser(`DELETE FROM Messages WHERE message_id=UNHEX(REPLACE($1,'-','')) AND from_user=$2 AND to_user=$3 OR from_user=$3 AND to_user=$2 ;`,[messageId,sender,receiver])

@@ -5,10 +5,16 @@ import helmet from 'helmet'
 import router from './routes/index'
 import bodyParser from 'body-parser'
 import {client} from "./database/index"
+import { createServer } from 'http'
+import { Server } from 'socket.io'
+import {NODE_ENV,PORT} from './config'
+import {Socket} from 'socket.io'
+import {allowOrigins} from './middlewares/AllowOrigins.middleware'
+
 dotenv.config()
 
-
 const app: Application = express()
+
 
 // Useing BodyParser
 
@@ -16,16 +22,19 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 
-//Secure Http Headers With By Setting Some  Verious Values And Xss Filter
-
-//app.use(helmet())
-app.use(helmet({contentSecurityPolicy:false}))
 
 //Logging Http Requests With My Customized MiddleWare
 
-if(process.env.NODE_ENV='dev'){
+if(NODE_ENV=='dev'){
 
 app.use(myCustomizedLogger)
+
+app.use(allowOrigins)
+
+}
+else{
+	//Secure Http Headers & Filters 
+    	app.use(helmet())
 
 }
 
@@ -35,7 +44,7 @@ app.use(router)
 
 // starting Server
 
-const PORT: string | number = process.env.PORT || 3000 ;
+
 
 
 
@@ -59,8 +68,27 @@ async function testDatabaseConnection(){
 
 testDatabaseConnection();
 
+// Createing An Htto Server Useing  Express App Instance
 
-app.listen(PORT, () => {
+const server = createServer(app)
+
+// Createing An Websocket Instance over Http Server 
+
+const webSocketServer=new Server(server)
+
+webSocketServer.on("connection",(socket:Socket)=>{
+	
+	if(NODE_ENV=="dev"){
+		console.log(`[+] Haveing A New Connection : ${socket.id}`)
+		socket.on("disconnect",()=>{
+			console.log(`${socket.id} Has Been disconnected [-] `)
+		})
+	}
+})
+
+
+
+server.listen(PORT || 3000, () => {
   console.log(`[+] Server Listening Now at Port : ${PORT} `)
 })
 

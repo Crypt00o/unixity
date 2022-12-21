@@ -22,7 +22,7 @@ class Chats extends Messages {
 			throw new Error(`[-] Error While Indexing Chat for User ${userId} : ${err}`)
 		}
 	}
-
+/*
 
 	async getChatInfo(chatId:string):Promise<Chat>{
 		
@@ -35,5 +35,5 @@ class Chats extends Messages {
 	}
 
 	
-
+*/
 }

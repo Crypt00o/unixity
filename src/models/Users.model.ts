@@ -1,15 +1,24 @@
 import {User} from "../types/User.type"
 import { hashPass,checkPass } from "../utils/passCrypto"
 import {client} from "../database"
-import {SqlMap} from "sql-map-easy"
+import {SqlMap, sqlParser} from "sql-map-easy"
 import {PoolConnection} from "mysql2/promise"
+import { Messages } from "./Messages.model"
+
+
+// create message instance
+
+const message=new Messages()
+
+
+
 
 class Users {
 
 	async indexAllUsers() : Promise<Array<User>>{
 		try{
 			const connection=await client.getConnection();
-			const result = await connection.query("SELECT username,email,firstname,lastname,bio FROM Users;") as Array<Array<unknown>>
+			const result = await connection.query("SELECT username,email,firstname,lastname,bio,profile_photo,activity_status,last_activity_time FROM Users;") as Array<Array<unknown>>
 			connection.release();
 			return result[0] as Array<User>
 		}
@@ -19,11 +28,10 @@ class Users {
 
 	}
 
-
 	async showUserInfo(username:string) : Promise<User>{
 		try{
 			const connection=await client.getConnection();
-			const sqlQuery=SqlMap.sqlParser("SELECT username,email,firstname,lastname,bio FROM Users WHERE username=$1 ; ",[username]);
+			const sqlQuery=SqlMap.sqlParser("SELECT username,email,firstname,lastname,bio,profile_photo,activity_status,last_activity_time FROM Users WHERE username=$1 ; ",[username]);
 			const result =await connection.query(sqlQuery) as Array<Array<unknown>>;
 			connection.release();
 			return result[0][0]  as User
@@ -37,7 +45,7 @@ class Users {
 
 	async checkUserAvailableity( connection:PoolConnection, username:string,email?:string) : Promise<false|User>{
 		try{
-			const sqlQuery=SqlMap.sqlParser("SELECT username,email,firstname,lastname,bio,password FROM Users WHERE username=$1 OR email=$2 ; ",[username,email]);
+			const sqlQuery=SqlMap.sqlParser("SELECT username,email,firstname,lastname,bio,profile_photo,activity_status,last_activity_time,password FROM Users WHERE username=$1 OR email=$2 ; ",[username,email]);
 			const result =await connection.query(sqlQuery) as Array<Array<unknown>>;
 			if (result[0].length==0){
 				return false
@@ -108,8 +116,8 @@ class Users {
 					if (newUserData.username!==username && await this.checkUserAvailableity(connection,newUserData.username)){
 						throw new Error (`[-] Error  Can,t Update Username : ${username} With : ${newUserData.username} Because ${newUserData.username}  it,s Already Exists `)
 					}
-					const sqlQuery=SqlMap.sqlParser("UPDATE Users SET username=$1,email=$2,password=$3,firstname=$4,lastname=$5,bio=$6 WHERE username=$7",
-						[newUserData.username,newUserData.email,newUserData.password,newUserData.firstname,newUserData.lastname,newUserData.bio])
+					const sqlQuery=SqlMap.sqlParser("UPDATE Users SET username=$1,email=$2,password=$3,firstname=$4,lastname=$5,bio=$6,profile_photo=$7 WHERE username=$8",
+						[newUserData.username,newUserData.email,newUserData.password,newUserData.firstname,newUserData.lastname,newUserData.bio,newUserData.profile_photo,username])
 					connection.release()
 					return newUserData;
 				}
@@ -126,6 +134,36 @@ class Users {
 	}
 
 
+	async setUserOnline(username:string){
+		try{
+			const connection=await client.getConnection()
+			const userInfo=await this.checkUserAvailableity(connection, username)
+			if(userInfo){
+					const sqlQuery=sqlParser("UPDATE Users SET activity_status=1,last_activity_time=CURRENT_TIMESTAMP()  WHERE USER=$1 ;",[username])
+					await connection.query(sqlQuery)
+					await message.deliverMessageStatusHook(connection, username)
+			}
+			connection.release()
+		}
+		catch(err){
+			throw new Error(`[-] Error While Makeing User Activiy Status Online : ${err}`)
+		}
+	}
+
+	async setUserOffline(username:string){
+		try{
+			const connection=await client.getConnection()
+			const userInfo=await this.checkUserAvailableity(connection, username)
+			if(userInfo){
+					const sqlQuery=sqlParser("UPDATE Users SET activity_status=0,last_activity_time=CURRENT_TIMESTAMP()  WHERE USER=$1 ;",[username])
+					await connection.query(sqlQuery)
+			}
+			connection.release()
+		}
+		catch(err){
+			throw new Error(`[-] Error While Makeing User Activiy Status Offline : ${err}`)
+		}
+	}
 
 	async login(idenity:string , plainPassword:string) : Promise<string|false>{
 		try{
