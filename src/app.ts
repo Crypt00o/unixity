@@ -1,12 +1,9 @@
 import {config}  from 'dotenv'
 import {client} from "./database/index"
-import {NODE_ENV,PORT} from './config'
-import {WebSocketServer,WebSocket} from "ws"
-
+import {PORT} from './config'
+import {WebSocketServer} from "ws"
 import {main} from "./controllers/Main"
 
-
-import {v4} from "uuid"
 
 
 config()
