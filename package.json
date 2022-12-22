@@ -41,7 +41,7 @@
     "mysql2": "^2.3.3",
     "socket.io": "^4.5.4",
     "supertest": "^6.3.3",
-    "unixityelite-ws": "^1.0.6",
+    "unixityelite-ws": "^1.0.8",
     "ws": "^8.11.0"
   },
   "devDependencies": {

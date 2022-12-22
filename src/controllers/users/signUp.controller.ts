@@ -3,6 +3,8 @@ import {User} from "../../types/User.type"
 import {signUpConnectionMessage} from "../../types/Connections/signUpConnectionMessage"
 import {UnixityWsSocket} from "unixityelite-ws"
 async function signUp(clientSocket:UnixityWsSocket,userInfo:signUpConnectionMessage){
+
+console.log(userInfo)
 	try{
 		const user = new Users()
 		const newUser:User={

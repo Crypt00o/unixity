@@ -1,11 +1,7 @@
-import {signUpConnectionMessage} from "./signUpConnectionMessage"
-import { loginConnectionMessage } from "./loginConnectionMessage"
-import { indexMessagesConnectionMessage } from "./indexMessagesConnectionMessage"
-import { sendMessageConnection } from "./sendMessageConnection"
-type ConnectionMessage = {
+type ConnectionMessage<T> = {
 	connectionMessageType:string,
 	connectionTime:string,
-	connectionMessageBody:loginConnectionMessage|signUpConnectionMessage|indexMessagesConnectionMessage|sendMessageConnection
+	connectionMessageBody:T,
 }
 
 export {ConnectionMessage} 
