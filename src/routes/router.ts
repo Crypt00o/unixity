@@ -2,7 +2,7 @@ import { ConnectionMessage } from "../types/Connections/ConnectionMessage"
 import { signUp } from "../controllers/users/signUp.controller"
 import {signUpConnectionMessage} from "../types/Connections/signUpConnectionMessage"
 import { clientSocket } from "../controllers/Main"
-import { Binary2Json } from "../utils/Json2Binary"
+import { Binary2Json } from "unixityelite-ws"
 
 async function router(connectionMessage:Buffer|ArrayBuffer|Buffer[]){
 	try{
