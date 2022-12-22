@@ -1,52 +1,15 @@
-import express, { Application} from 'express'
-import * as dotenv from 'dotenv'
-import {myCustomizedLogger} from './middlewares/mylogger.middleware'
-import helmet from 'helmet'
-import router from './routes/index'
-import bodyParser from 'body-parser'
+import {config}  from 'dotenv'
 import {client} from "./database/index"
-import { createServer } from 'http'
-import { Server } from 'socket.io'
 import {NODE_ENV,PORT} from './config'
-import {Socket} from 'socket.io'
-import {allowOrigins} from './middlewares/AllowOrigins.middleware'
+import {WebSocketServer,WebSocket} from "ws"
 
-dotenv.config()
-
-const app: Application = express()
+import {main} from "./controllers/Main"
 
 
-// Useing BodyParser
-
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
+import {v4} from "uuid"
 
 
-
-//Logging Http Requests With My Customized MiddleWare
-
-if(NODE_ENV=='dev'){
-
-app.use(myCustomizedLogger)
-
-app.use(allowOrigins)
-
-}
-else{
-	//Secure Http Headers & Filters 
-    	app.use(helmet())
-
-}
-
-// Useing Routes And Api
-
-app.use(router)
-
-// starting Server
-
-
-
-
+config()
 
 
 
@@ -68,31 +31,18 @@ async function testDatabaseConnection(){
 
 testDatabaseConnection();
 
-// Createing An Htto Server Useing  Express App Instance
-
-const server = createServer(app)
-
-// Createing An Websocket Instance over Http Server 
-
-const webSocketServer=new Server(server)
-
-webSocketServer.on("connection",(socket:Socket)=>{
-	
-	if(NODE_ENV=="dev"){
-		console.log(`[+] Haveing A New Connection : ${socket.id}`)
-		socket.on("disconnect",()=>{
-			console.log(`${socket.id} Has Been disconnected [-] `)
-		})
-	}
-})
 
 
 
-server.listen(PORT || 3000, () => {
-  console.log(`[+] Server Listening Now at Port : ${PORT} `)
-})
+const server= new WebSocketServer({
+	port:parseInt(PORT as string),
+	clientTracking:true
+	})
 
-export default app
+main(server)
+
+export {server}
+
 
 
 
