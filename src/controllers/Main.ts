@@ -2,7 +2,7 @@ import {onCloseConnection} from "../middlewares/onCloseConnection.middleware"
 import {onClientConnection} from "../middlewares/onClientConnection.middleware"
 
 
-import { router } from "../routes"
+import { router } from "../routes/router"
 import { UnixityWsSocket } from "unixityelite-ws"
 
 import {createUnixityWs} from "unixityelite-ws"
