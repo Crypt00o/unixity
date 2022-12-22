@@ -15,6 +15,7 @@ function main(server:WebSocketServer){
 	server.on("connection",(socket:UnixityWsSocket)=>{
 		
 		clientSocket=createUnixityWs(socket)
+
 		
 		onClientConnection()
 
@@ -23,9 +24,6 @@ function main(server:WebSocketServer){
 		socket.on("close",onCloseConnection)
 
 	})
-
-
-
 
 }
 

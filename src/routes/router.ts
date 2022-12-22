@@ -15,12 +15,11 @@ async function router(connectionMessage:Buffer|ArrayBuffer|Buffer[]){
 			(connectionMessageMapper.get(parsedConnectionMessage.connectionMessageType) as Function) (clientSocket,parsedConnectionMessage.connectionMessageBody)	
 			}
 		else{
-
-
+			clientSocket.sendJson({message:"Welcome To Unixity Chat Server "})
 		}
 	}
 	catch(err){
-		clientSocket.sendJson({"error":"true",message:String(err)})
+		clientSocket.sendJson({error:true,message:String(err)})
 	}
 }
 

@@ -1,10 +1,13 @@
 import {Users} from "../../models/Users.model"
 import {User} from "../../types/User.type"
 import {signUpConnectionMessage} from "../../types/Connections/signUpConnectionMessage"
+import {verifynewUserData} from "../../utils/validator"
 import {UnixityWsSocket} from "unixityelite-ws"
+
+
+
 async function signUp(clientSocket:UnixityWsSocket,userInfo:signUpConnectionMessage){
 
-console.log(userInfo)
 	try{
 		const user = new Users()
 		const newUser:User={
@@ -15,12 +18,18 @@ console.log(userInfo)
 			lastname:userInfo.lastname,
 			bio:(userInfo.bio? userInfo.bio:null)
 		}
-
-		 await user.createUser(newUser)
+		
+		const validateResult=verifynewUserData(newUser)
+		if(validateResult.error ){
+			clientSocket.sendJson(validateResult)	
+			return
+		}
+		else{
+			await user.createUser(newUser)
 			clientSocket.sendJson({
 				Message:"Success, You Can Now LogIn With Your New UserName or Email"
 			})
-
+		}
 	}
 	catch(err){
 			clientSocket.sendJson({"error":"true","error-type":"SIGNUP ERROR","error-message":"User Or Email Exists"})
